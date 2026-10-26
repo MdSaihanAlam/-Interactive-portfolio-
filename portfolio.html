@@ -1,0 +1,1344 @@
+<title>Md Saihan Alam</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Md Saihan Alam, AI/ML researcher in computer vision and TinyML. Portfolio told as a scroll film.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500&family=DM+Mono:wght@400;500&family=Pinyon+Script&display=swap">
+<style>
+/* Layout: one fixed canvas plays eight live scenes, each one a working picture of the chapter's
+   project (network, attention, scan, Grad-CAM, accelerometer, community graph, dataset).
+   Scrolling scrubs the film; paper cards carry the content. Single dark look by design. */
+:root {
+  --ink: #0b0606;
+  --blood: #c3121a;
+  --ember: #ff4a2e;
+  --paper: #ebe5d9;
+  --paper-dim: #b9b1a3;
+  --muted: #5b524a;
+  --display: "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", Georgia, serif;
+  --body: "Zen Kaku Gothic New", "Hiragino Sans", system-ui, sans-serif;
+  --mono: "DM Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+  --script: "Pinyon Script", "Snell Roundhand", cursive;
+  --gutter-l: max(16px, env(safe-area-inset-left, 0px));
+  --gutter-r: max(16px, env(safe-area-inset-right, 0px));
+  color-scheme: dark;
+}
+[hidden] { display: none !important; }
+html { background: var(--ink); }
+body { background: var(--ink); color: var(--paper); font-family: var(--body); font-size: 15px; line-height: 1.6; overflow-x: hidden; margin: 0; }
+
+#stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; z-index: 0; }
+
+/* header */
+.top {
+  position: fixed; inset: 0 0 auto; z-index: 20;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding-top: calc(env(safe-area-inset-top, 0px) + 14px); padding-bottom: 14px;
+  padding-left: var(--gutter-l); padding-right: var(--gutter-r);
+  mix-blend-mode: difference; color: #fff;
+}
+.logo { font-family: var(--script); font-size: clamp(30px, 4vw, 40px); line-height: 1; text-decoration: none; color: inherit; }
+.logo small { font-family: var(--mono); font-size: 10px; letter-spacing: .18em; text-transform: uppercase; margin-left: 10px; vertical-align: middle; }
+.menu-btn {
+  font: 500 11px/1 var(--mono); letter-spacing: .16em; text-transform: uppercase;
+  color: inherit; background: transparent; border: 1px solid currentColor; padding: 10px 14px; cursor: pointer;
+}
+a:focus-visible, button:focus-visible { outline: 2px solid var(--ember); outline-offset: 3px; }
+
+/* chapter list overlay */
+.chapters {
+  position: fixed; inset: 0; z-index: 30; background: rgba(11,6,6,.95);
+  display: grid; place-items: center; overflow: auto;
+  padding-left: var(--gutter-l); padding-right: var(--gutter-r); padding-block: 80px 40px;
+}
+.chapters ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; width: min(560px, 100%); }
+.chapters li button {
+  width: 100%; display: grid; grid-template-columns: 3.2em 1fr auto; align-items: baseline; gap: 12px;
+  background: none; border: 0; border-bottom: 1px solid rgba(235,229,217,.15); color: var(--paper);
+  padding: 11px 0; text-align: left; cursor: pointer;
+}
+.chapters li button:hover .t { color: var(--ember); }
+.chapters .n { font: 12px var(--mono); color: var(--paper-dim); }
+.chapters .t { font: 700 clamp(21px, 3.6vw, 30px)/1.15 var(--display); transition: color .2s; }
+.chapters .tc { font: 11px var(--mono); color: var(--paper-dim); font-variant-numeric: tabular-nums; }
+.chapters .close { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 18px); right: var(--gutter-r); color: var(--paper); }
+
+/* side rail */
+.rail {
+  position: fixed; right: var(--gutter-r); top: 50%; transform: translateY(-50%); z-index: 18;
+  display: grid; gap: 4px; mix-blend-mode: difference; color: #fff;
+}
+.rail button {
+  display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+  background: none; border: 0; color: inherit; cursor: pointer; padding: 5px 0;
+  font: 500 10px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase;
+}
+.rail .lbl { opacity: 0; transform: translateX(6px); transition: opacity .2s, transform .2s; white-space: nowrap; }
+.rail button:hover .lbl, .rail button:focus-visible .lbl { opacity: 1; transform: none; }
+.rail i { width: 7px; height: 7px; border: 1px solid currentColor; border-radius: 50%; transition: transform .25s, background .25s; }
+.rail button[aria-current="true"] i { background: currentColor; transform: scale(1.4); }
+
+/* cursor */
+.cursor {
+  position: fixed; left: 0; top: 0; z-index: 40; width: 30px; height: 30px; margin: -15px 0 0 -15px;
+  border: 1px solid #fff; border-radius: 50%; pointer-events: none; mix-blend-mode: difference;
+  display: none; transition: width .2s, height .2s, margin .2s, background .2s;
+}
+.cursor.big { width: 58px; height: 58px; margin: -29px 0 0 -29px; background: #fff; }
+@media (hover: hover) and (pointer: fine) { .cursor { display: block; } }
+
+/* scroll track */
+main { position: relative; z-index: 5; }
+.chapter { height: 150svh; position: relative; }
+.chapter:last-child { height: 110svh; }
+
+/* paper cards; children rise in one after another as the card arrives */
+.card {
+  position: fixed; z-index: 10; width: min(380px, calc(100vw - 32px));
+  max-height: calc(100svh - 180px); overflow: auto; overscroll-behavior: contain;
+  background: var(--paper); color: var(--ink);
+  padding: 18px 20px 20px; display: grid; gap: 12px; align-content: start;
+  box-shadow: 0 30px 60px -30px rgba(0,0,0,.7);
+  opacity: 0; will-change: opacity, transform;
+}
+.card > * {
+  opacity: clamp(0, calc(var(--a, 1) * 1.9 - var(--k, 0) * .13), 1);
+  transform: translateY(calc((1 - var(--a, 1)) * (10px + var(--k, 0) * 7px)));
+}
+.card.wide { width: min(440px, calc(100vw - 32px)); }
+.card.xwide { width: min(620px, calc(100vw - 32px)); }
+.card[data-i="0"] { opacity: 1; }
+.card .row { display: flex; justify-content: space-between; gap: 12px; font: 500 10.5px/1.3 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); padding-bottom: 10px; border-bottom: 1px solid rgba(11,6,6,.18); font-variant-numeric: tabular-nums; }
+.card h1, .card h2 { font-family: var(--display); font-weight: 800; margin: 0; line-height: 1.08; text-wrap: balance; letter-spacing: -.01em; }
+.card h2 { font-size: clamp(25px, 3vw, 32px); }
+.card p { margin: 0; font-size: 14.5px; line-height: 1.6; color: #2b2420; max-width: 62ch; }
+.card .note { font-size: 12.5px; color: var(--muted); }
+
+.stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 18px; padding-block: 2px; }
+.stats div { min-width: 0; display: grid; gap: 2px; }
+.stats b { font: 800 clamp(22px, 2.4vw, 27px)/1 var(--display); color: var(--blood); font-variant-numeric: tabular-nums; }
+.stats span { font-size: 12px; line-height: 1.4; color: var(--muted); }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips span { font: 500 10.5px/1 var(--mono); letter-spacing: .04em; padding: 5px 7px; border: 1px solid rgba(11,6,6,.22); color: #3a322c; transition: background .2s, color .2s; }
+.chips span:hover { background: var(--ink); color: var(--paper); }
+
+.links { display: flex; flex-wrap: wrap; gap: 8px; }
+.links a, .copy {
+  position: relative; overflow: hidden; isolation: isolate;
+  font: 500 10.5px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; text-decoration: none; cursor: pointer;
+  padding: 11px 13px; border: 1px solid var(--ink); color: var(--ink); background: transparent; transition: color .25s;
+}
+.links a::before, .copy::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; background: var(--ink);
+  transform: scaleY(0); transform-origin: bottom; transition: transform .25s;
+}
+.links a:hover, .copy:hover { color: var(--paper); }
+.links a:hover::before, .copy:hover::before { transform: scaleY(1); }
+.links a.primary { background: var(--blood); border-color: var(--blood); color: var(--paper); }
+.links a.primary::before { background: #7d070c; }
+
+.list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.list li { display: grid; grid-template-columns: 8.2em minmax(0, 1fr); gap: 12px; font-size: 13.5px; line-height: 1.45; color: #2b2420; }
+.list .st { font: 500 10px/1.5 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--blood); }
+.list a { color: inherit; text-decoration-color: var(--blood); text-underline-offset: 3px; }
+.list b { font-weight: 500; color: var(--ink); }
+.label { font: 500 10px var(--mono); letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+
+.pos-a { left: var(--gutter-l); bottom: 92px; }
+.pos-c { left: var(--gutter-l); top: 96px; }
+.pos-d { right: calc(var(--gutter-r) + 34px); bottom: 92px; }
+.pos-e { left: 0; right: 0; margin-inline: auto; bottom: 92px; }
+
+/* hero */
+.hero { width: min(600px, calc(100vw - 32px)); background: none; color: var(--paper); box-shadow: none; padding: 0; gap: 14px; overflow: visible; max-height: none; }
+.hero h1 { font-size: clamp(46px, 7.4vw, 92px); color: var(--paper); line-height: .98; }
+.hero h1 em { font-style: normal; color: var(--ember); }
+.hero p { color: var(--paper); opacity: .88; font-size: 16px; max-width: 44ch; }
+.hero .row { color: var(--paper-dim); border-color: rgba(235,229,217,.25); }
+.hero .links a { color: var(--paper); border-color: rgba(235,229,217,.6); }
+.hero .links a::before { background: var(--paper); }
+.hero .links a:hover { color: var(--ink); }
+.hero .links a.primary { border-color: var(--blood); }
+.hero .links a.primary::before { background: #7d070c; }
+.hero .links a.primary:hover { color: var(--paper); }
+.scroll-hint { font: 500 11px var(--mono); letter-spacing: .2em; text-transform: uppercase; color: var(--paper-dim); display: flex; align-items: center; gap: 10px; }
+.scroll-hint::after { content: ""; width: 1px; height: 28px; background: var(--paper-dim); animation: drip 1.8s ease-in-out infinite; transform-origin: top; }
+@keyframes drip { 0% { transform: scaleY(0); } 50% { transform: scaleY(1); } 100% { transform: scaleY(1); opacity: 0; } }
+
+.mail-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.mail { font: 500 14px var(--mono); user-select: all; word-break: break-all; }
+
+/* bottom HUD */
+.hud {
+  position: fixed; inset: auto 0 0; z-index: 15;
+  display: flex; justify-content: space-between; align-items: end; gap: 16px;
+  padding-left: var(--gutter-l); padding-right: var(--gutter-r);
+  padding-top: 14px; padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 18px);
+  font: 500 11px/1.3 var(--mono); letter-spacing: .14em; text-transform: uppercase;
+  color: #fff; mix-blend-mode: difference; font-variant-numeric: tabular-nums; pointer-events: none;
+}
+.hud .bar { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: rgba(255,255,255,.2); }
+.hud .bar i { display: block; height: 100%; width: 0; background: #fff; }
+.hud .right { text-align: right; }
+
+@media (max-width: 900px) {
+  .rail { display: none; }
+  .pos-d { right: var(--gutter-r); }
+}
+@media (max-width: 720px) {
+  .card, .card.wide, .card.xwide, .pos-a, .pos-c, .pos-d, .pos-e {
+    left: var(--gutter-l); right: var(--gutter-r); top: auto; bottom: 64px; margin-inline: 0; width: auto;
+  }
+  .card { max-height: 54svh; padding: 14px 16px 16px; gap: 10px; }
+  .card p { font-size: 14px; }
+  .hero { bottom: 80px; max-height: none; }
+  .hero p { font-size: 15px; }
+  .list li { grid-template-columns: 1fr; gap: 2px; }
+  .hud { font-size: 10px; }
+  .hud .hide-sm { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scroll-hint::after { animation: none; }
+  .card > * { opacity: 1; transform: none; }
+}
+</style>
+
+<canvas id="stage" aria-hidden="true"></canvas>
+<div class="cursor" id="cursor" aria-hidden="true"></div>
+
+<header class="top">
+  <a class="logo" href="#ch1" aria-label="Md Saihan Alam, back to the start">Saihan<small>Alam</small></a>
+  <button class="menu-btn" id="menuBtn" aria-expanded="false" aria-controls="chapters">Chapters</button>
+</header>
+
+<nav class="rail" id="rail" aria-label="Chapter navigation"></nav>
+
+<nav class="chapters" id="chapters" hidden aria-label="Chapters">
+  <button class="menu-btn close" id="closeBtn">Close</button>
+  <ol id="chapterList"></ol>
+</nav>
+
+<main>
+  <section class="chapter" id="ch1">
+    <div class="card hero pos-a" data-i="0">
+      <div class="row"><span>AI / ML researcher · Computer vision · TinyML</span><span>Dhaka</span></div>
+      <h1>Md Saihan <em>Alam</em></h1>
+      <p>I train models for crops and wearables, then make them run where people are.</p>
+      <div class="links">
+        <a class="primary" href="https://github.com/MdSaihanAlam" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://www.linkedin.com/in/md-saihan-alam/" target="_blank" rel="noopener">LinkedIn</a>
+      </div>
+      <span class="scroll-hint">Scroll to play</span>
+    </div>
+  </section>
+
+  <section class="chapter" id="ch2">
+    <article class="card wide pos-d" data-i="1">
+      <div class="row"><span>Ch. II · About</span><span>00:00:08:00</span></div>
+      <h2>Trained, measured, shipped.</h2>
+      <p>I'm a final-year CSE researcher at Dhaka International University. My work covers plant-disease recognition for papaya and guava, an open papaya leaf dataset, and a fall detector that runs on a 240 MHz microcontroller.</p>
+      <div class="stats">
+        <div><b>97.75%</b><span>papaya leaf test accuracy, MaxViT-Tiny, 666 test images</span></div>
+        <div><b>99.59%</b><span>guava leaf accuracy from a 1.83 M-parameter model</span></div>
+        <div><b>2.9 ms</b><span>fall classification on an ESP32 microcontroller</span></div>
+        <div><b>4,506</b><span>images in the open papaya dataset on Zenodo</span></div>
+      </div>
+    </article>
+  </section>
+
+  <section class="chapter" id="ch3">
+    <article class="card wide pos-a" data-i="2">
+      <div class="row"><span>Project · Computer vision, web</span><span>Live</span></div>
+      <h2>PlantSense AI</h2>
+      <p>A farmer photographs a papaya or guava leaf and gets the disease, how to treat it and how to prevent it, in English or Bangla. The model runs in the browser, so the photo never leaves the phone.</p>
+      <div class="stats">
+        <div><b>97.75%</b><span>papaya test accuracy, macro-F1 0.976</span></div>
+        <div><b>0 of 666</b><span>predictions changed after FP16 halved the model to 62.2 MB</span></div>
+      </div>
+      <div class="chips"><span>MaxViT-Tiny</span><span>PyTorch</span><span>ONNX Runtime Web</span><span>WebAssembly</span><span>Flask</span><span>Docker</span><span>Vercel</span></div>
+      <div class="links">
+        <a class="primary" href="https://plantsense-ai.vercel.app/" target="_blank" rel="noopener">Open the live app</a>
+        <a href="https://github.com/MdSaihanAlam/PlantSense-AI" target="_blank" rel="noopener">Source</a>
+      </div>
+      <p class="note">Built with Zubayer Ahmad.</p>
+    </article>
+  </section>
+
+  <section class="chapter" id="ch4">
+    <article class="card wide pos-a" data-i="3">
+      <div class="row"><span>Research · Paper in preparation</span><span>00:00:24:00</span></div>
+      <h2>Guava leaf and fruit disease</h2>
+      <p>Six architectures trained with one recipe on 3,300 leaf images and 902 fruit images, so the comparison is fair. Leaves are close to solved. Fruit is not.</p>
+      <div class="stats">
+        <div><b>98.56–100%</b><span>leaf accuracy across all six models</span></div>
+        <div><b>78.63%</b><span>best fruit accuracy, multimodal fusion (95% CI 70.8 to 84.8%)</span></div>
+      </div>
+      <p class="note">Before training: 139 near-duplicate images with conflicting labels were removed. A border-only classifier scored 81.8% against 16.7% chance, so backgrounds were removed too, and the leaf results held.</p>
+      <div class="chips"><span>ConvNeXtV2</span><span>DINOv2</span><span>MobileNetV2</span><span>Multimodal fusion</span><span>Grad-CAM</span><span>MixUp / CutMix</span></div>
+    </article>
+  </section>
+
+  <section class="chapter" id="ch5">
+    <article class="card wide pos-d" data-i="4">
+      <div class="row"><span>Project · Embedded TinyML</span><span>Live</span></div>
+      <h2>NanoSense</h2>
+      <p>A wristband that detects a fall on the device itself and texts up to three family members the wearer's vital signs and location.</p>
+      <div class="stats">
+        <div><b>82.8%</b><span>of simulated falls detected (24 of 29, 5-fold CV)</span></div>
+        <div><b>2.9 ms</b><span>per classification on the ESP32 at 240 MHz</span></div>
+        <div><b>923</b><span>parameters, int8 weights, about 1.3 KB</span></div>
+        <div><b>8×</b><span>fewer false alarms than a 4 g threshold</span></div>
+      </div>
+      <div class="chips"><span>C++</span><span>ESP32</span><span>FreeRTOS</span><span>PlatformIO</span><span>PyTorch</span><span>int8 TinyML</span><span>Upstash Redis</span></div>
+      <div class="links">
+        <a class="primary" href="https://nanosense.vercel.app/" target="_blank" rel="noopener">Live dashboard</a>
+        <a href="https://github.com/MdSaihanAlam/Fall-Detection-and-Emergency-Alert" target="_blank" rel="noopener">Source</a>
+      </div>
+      <p class="note">Evaluated on simulated falls by one participant. Built with Zubayer Ahmad.</p>
+    </article>
+  </section>
+
+  <section class="chapter" id="ch6">
+    <article class="card wide pos-c" data-i="5">
+      <div class="row"><span>Project · Full-stack MERN</span><span>Live</span></div>
+      <h2>DIU Student Hub</h2>
+      <p>A community platform for Dhaka International University students, faculty and alumni: social feed, notes library, housing, research hub, mentoring, events, messaging and moderation.</p>
+      <p class="note">JWT in an HttpOnly cookie, CSRF tokens, permissions checked on the server, and 37 integration tests. Not operated or endorsed by the university.</p>
+      <div class="links">
+        <a class="primary" href="https://diu-student-hub.vercel.app/" target="_blank" rel="noopener">Open the platform</a>
+        <a href="https://github.com/MdSaihanAlam/DIU-STUDENT-HUB" target="_blank" rel="noopener">Source</a>
+      </div>
+      <span class="label">More from the degree</span>
+      <ul class="list">
+        <li><span class="st">Django</span><span><a href="https://github.com/MdSaihanAlam/BookBazar-Ecommerce-master" target="_blank" rel="noopener"><b>BookBazar</b></a>, an online bookstore with cart, checkout and admin panel</span></li>
+        <li><span class="st">Java</span><span><a href="https://github.com/MdSaihanAlam/Student-Management-System" target="_blank" rel="noopener"><b>Student Management System</b></a> for records, grades and enrollment</span></li>
+        <li><span class="st">Flex · C</span><span><a href="https://github.com/MdSaihanAlam/Compiler-Project" target="_blank" rel="noopener"><b>Lexical Analyzer</b></a> that labels keywords, literals and operators</span></li>
+        <li><span class="st">In progress</span><span><b>Gesture-controlled robot</b> driven by hand gestures read with OpenCV</span></li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="chapter" id="ch7">
+    <article class="card xwide pos-e" data-i="6">
+      <div class="row"><span>Publications &amp; dataset</span><span>00:00:48:00</span></div>
+      <h2>Papers, data and tools</h2>
+      <ul class="list">
+        <li><span class="st">Published</span><span><a href="https://doi.org/10.5281/zenodo.21833164" target="_blank" rel="noopener"><b>BDPapayaDisease</b></a>, a papaya leaf disease and pest dataset. 4,506 smartphone images, six classes, five districts of Bangladesh. Zenodo, Aug 2026.</span></li>
+        <li><span class="st">In preparation</span><span><b>NanoSense</b>: a TinyML wrist-worn fall detection and emergency alert system on an ESP32. IEEE format.</span></li>
+        <li><span class="st">In preparation</span><span><b>Guava comparative study</b> of convolutional, transformer and multimodal models. Springer LNCS.</span></li>
+        <li><span class="st">Complete</span><span><b>PlantSense AI</b> technical report, Department of CSE, DIU, Oct 2026.</span></li>
+      </ul>
+      <span class="label">What I build with</span>
+      <div class="chips"><span>Python</span><span>C / C++</span><span>Java</span><span>JavaScript</span><span>SQL</span><span>PyTorch</span><span>timm</span><span>OpenCV</span><span>ONNX</span><span>TinyML</span><span>ESP32</span><span>FreeRTOS</span><span>React</span><span>Node.js</span><span>MongoDB</span><span>Django</span><span>Flask</span><span>Docker</span><span>LaTeX</span></div>
+    </article>
+  </section>
+
+  <section class="chapter" id="ch8">
+    <article class="card wide pos-e" data-i="7">
+      <div class="row"><span>Contact</span><span>Dhaka, Bangladesh</span></div>
+      <h2>Looking for someone to train it, measure it and ship it?</h2>
+      <p>I'm open to full-time roles and research positions in machine learning, computer vision and embedded AI. B.Sc in CSE, Dhaka International University, graduating 2026.</p>
+      <div class="mail-row">
+        <span class="mail" id="mail">saihan.alam.bd@gmail.com</span>
+        <button class="copy" id="copyBtn">Copy email</button>
+      </div>
+      <div class="links">
+        <a href="https://github.com/MdSaihanAlam" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://www.linkedin.com/in/md-saihan-alam/" target="_blank" rel="noopener">LinkedIn</a>
+        <a href="https://codeforces.com/profile/Saihan_Alam" target="_blank" rel="noopener">Codeforces</a>
+        <a href="https://leetcode.com/u/Saihan_Alam/" target="_blank" rel="noopener">LeetCode</a>
+      </div>
+    </article>
+  </section>
+</main>
+
+<div class="hud" aria-hidden="true">
+  <div><span id="hudCh">Ch. I</span> <span class="hide-sm">· <span id="hudName">Intro</span></span></div>
+  <div class="right"><span class="hide-sm">24 fps · </span>TC <span id="hudTc">00:00:00:00</span></div>
+  <div class="bar"><i id="hudBar"></i></div>
+</div>
+
+<script>
+(() => {
+  const NAMES = ["Intro", "About", "PlantSense AI", "Guava study", "NanoSense", "DIU Student Hub", "Papers and tools", "Contact"];
+  const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII"];
+  const SECONDS_PER_CHAPTER = 8, FPS = 24, TAU = Math.PI * 2;
+  const C = { ink: "#0b0606", blood: "#c3121a", ember: "#ff4a2e", paper: "#ebe5d9", gold: "#d6a12e" };
+  const MONO = '"DM Mono", ui-monospace, Consolas, monospace';
+  const DISPLAY = '"Shippori Mincho", Georgia, serif';
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const canHover = matchMedia("(hover: hover) and (pointer: fine)").matches;
+
+  const stage = document.getElementById("stage");
+  const ctx = stage.getContext("2d");
+  let W = 0, H = 0, DPR = 1, M = 0, T = 0, dt = 0;
+  const ptr = { x: .5, y: .5, sx: .5, sy: .5, px: -100, py: -100, active: false };
+
+  const mulberry = (a) => () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const easeOut = (t) => 1 - Math.pow(1 - t, 3);
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  const layout = (w, h) => ({ wide: w >= 900, portrait: h > w * 1.2, narrow: w < 720 });
+  const mono = (c, px, weight = 500) => { c.font = `${weight} ${px}px ${MONO}`; };
+  const fsz = () => Math.max(10, Math.round(Math.min(W, H) * .0135));
+
+  /* ---------- portrait: photo.png beside this file ---------- */
+  const photo = { img: new Image(), duo: null, col: null };
+  function buildPhoto() {
+    const im = photo.img, w = im.naturalWidth, h = im.naturalHeight;
+    const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+    const c = cv.getContext("2d"); c.drawImage(im, 0, 0);
+    const px = c.getImageData(0, 0, w, h).data; // throws on a file:// page; the sun then uses a multiply blend
+    // flood the white backdrop in from the top and sides, so the white shirt is kept
+    const bg = new Uint8Array(w * h), stack = [];
+    const white = (i) => Math.min(px[i * 4], px[i * 4 + 1], px[i * 4 + 2]) > 226;
+    for (let x = 0; x < w; x++) stack.push(x);
+    for (let y = 0; y < h; y++) stack.push(y * w, y * w + w - 1);
+    while (stack.length) {
+      const i = stack.pop();
+      if (bg[i] || !white(i)) continue;
+      bg[i] = 1;
+      const x = i % w, y = (i / w) | 0;
+      if (x > 0) stack.push(i - 1); if (x < w - 1) stack.push(i + 1);
+      if (y > 0) stack.push(i - w); if (y < h - 1) stack.push(i + w);
+    }
+    const col = c.createImageData(w, h), duo = c.createImageData(w, h);
+    const stops = [[0, [11, 6, 6]], [.45, [150, 12, 20]], [.75, [255, 74, 46]], [1, [245, 236, 222]]];
+    for (let i = 0; i < w * h; i++) {
+      let a = 0;
+      if (!bg[i]) {
+        let n = 0;
+        for (const j of [i - 1, i + 1, i - w, i + w]) if (j >= 0 && j < w * h && bg[j]) n++;
+        a = 255 - n * 50;
+      }
+      const r = px[i * 4], g = px[i * 4 + 1], b = px[i * 4 + 2];
+      col.data.set([r, g, b, a], i * 4);
+      const L = (.3 * r + .59 * g + .11 * b) / 255;
+      let k = 0; while (k < stops.length - 2 && L > stops[k + 1][0]) k++;
+      const [l0, c0] = stops[k], [l1, c1] = stops[k + 1], t = clamp((L - l0) / (l1 - l0));
+      duo.data.set([lerp(c0[0], c1[0], t), lerp(c0[1], c1[1], t), lerp(c0[2], c1[2], t), a], i * 4);
+    }
+    const mk = (id) => { const o = document.createElement("canvas"); o.width = w; o.height = h; o.getContext("2d").putImageData(id, 0, 0); return o; };
+    photo.col = mk(col); photo.duo = mk(duo);
+  }
+  photo.img.onload = () => { try { buildPhoto(); } catch (e) { photo.duo = photo.col = null; } };
+  photo.img.src = "photo.png";
+
+  // the red sun with the portrait set inside it, cut by slats across the chest
+  function drawSun(c, cx, cy, R, reveal) {
+    const g = c.createRadialGradient(cx, cy - R * .3, R * .1, cx, cy, R);
+    g.addColorStop(0, "#ff3b2a"); g.addColorStop(1, "#8f0a0e");
+    c.fillStyle = g; c.beginPath(); c.arc(cx, cy, R, 0, TAU); c.fill();
+    c.save(); c.beginPath(); c.arc(cx, cy, R, 0, TAU); c.clip();
+    const ready = photo.img.complete && photo.img.naturalWidth;
+    const S = R * 1.96, x = cx - S / 2, y = cy + R * 1.02 - S;
+    if (ready) {
+      if (photo.duo) c.drawImage(photo.duo, x, y, S, S);
+      else { c.globalCompositeOperation = "multiply"; c.filter = "grayscale(1) contrast(1.15)"; c.drawImage(photo.img, x, y, S, S); c.filter = "none"; c.globalCompositeOperation = "source-over"; }
+    }
+    c.fillStyle = "#070404";
+    for (let i = 1; i <= 6; i++) c.fillRect(cx - R, cy + R * (.5 + i * .085), R * 2, 1 + i * R * .012);
+    if (ready && reveal > .01) {
+      c.globalAlpha = reveal;
+      c.fillStyle = "#efe9de"; c.fillRect(cx - R, cy - R, R * 2, R * 2);
+      c.drawImage(photo.col || photo.img, x, y, S, S);
+      c.globalAlpha = 1;
+    }
+    if (!reduced) {
+      const sy = cy - R + ((T * .35) % 1) * R * 2;
+      const sg = c.createLinearGradient(0, sy - 30, 0, sy);
+      sg.addColorStop(0, "rgba(255,240,230,0)"); sg.addColorStop(1, "rgba(255,240,230,.14)");
+      c.fillStyle = sg; c.fillRect(cx - R, sy - 30, R * 2, 30);
+    }
+    c.restore();
+  }
+
+  function streaks(c, w, h, seed, color, alpha, count) {
+    const r = mulberry(seed);
+    c.save(); c.fillStyle = color;
+    for (let i = 0; i < count; i++) { c.globalAlpha = alpha * r(); c.fillRect(r() * w, 0, 1 + r() * 2, h); }
+    c.restore();
+  }
+  function grid(c, w, h, step, color) {
+    c.fillStyle = color;
+    for (let x = 0; x < w; x += step) c.fillRect(x, 0, 1, h);
+    for (let y = 0; y < h; y += step) c.fillRect(0, y, w, 1);
+  }
+
+  /* =====================================================================
+     Scenes. init() paints the still layer once per resize into the cache;
+     draw() paints the live layer on top every frame it is on screen.
+     ===================================================================== */
+
+  // I. Intro: a small network firing, its outputs named after the three lines of work
+  const sNet = {
+    init(c, w, h) {
+      const { wide, portrait } = layout(w, h), r = mulberry(11);
+      c.fillStyle = "#070404"; c.fillRect(0, 0, w, h);
+      this.cx = wide ? w * .67 : w / 2;
+      this.cy = wide ? h * .45 : (portrait ? h * .27 : h * .36);
+      this.rw = wide ? Math.min(w * .44, 640) : w * .64;
+      this.rh = wide ? h * .58 : (portrait ? h * .3 : h * .42);
+      const g = c.createRadialGradient(this.cx, this.cy, 0, this.cx, this.cy, this.rw * .9);
+      g.addColorStop(0, "rgba(195,18,26,.32)"); g.addColorStop(1, "rgba(195,18,26,0)");
+      c.fillStyle = g; c.fillRect(0, 0, w, h);
+      for (let x = 0; x < w; x += 3) {
+        if (r() > .4) continue;
+        const len = h * Math.pow(r(), 2.3) * .5;
+        const gr = c.createLinearGradient(0, 0, 0, len);
+        gr.addColorStop(0, `rgba(195,18,26,${.2 + r() * .55})`); gr.addColorStop(1, "rgba(195,18,26,0)");
+        c.fillStyle = gr; c.fillRect(x, 0, 1 + r() * 2.5, len);
+      }
+      c.strokeStyle = "rgba(255,74,46,.12)"; c.lineWidth = 1;
+      for (const k of [.62, .8]) { c.beginPath(); c.arc(this.cx, this.cy, this.rh * k, 0, TAU); c.stroke(); }
+      streaks(c, w, h, 3, C.paper, .04, 50);
+      const sizes = [7, 11, 11, 7, 3], sp = this.rh / 11;
+      this.nodes = []; this.layers = [];
+      sizes.forEach((n, l) => {
+        const arr = [];
+        for (let j = 0; j < n; j++) {
+          this.nodes.push({ x: this.cx - this.rw / 2 + this.rw * l / (sizes.length - 1), y: this.cy + (j - (n - 1) / 2) * sp, l, a: 0 });
+          arr.push(this.nodes.length - 1);
+        }
+        this.layers.push(arr);
+      });
+      this.pulses = []; this.spawn = 0; this.rv = 0;
+      this.R = Math.min(this.rh * .46, this.rw * .5);
+    },
+    draw(c, w, h) {
+      const { nodes, layers, cx, cy, R } = this, last = layers.length - 1;
+      const ox = (ptr.sx - .5) * -18, oy = (ptr.sy - .5) * -12;
+      c.save(); c.translate(ox, oy);
+      c.strokeStyle = "rgba(235,229,217,.07)"; c.lineWidth = 1; c.beginPath();
+      for (let l = 0; l < last; l++) for (const a of layers[l]) for (const b of layers[l + 1]) { c.moveTo(nodes[a].x, nodes[a].y); c.lineTo(nodes[b].x, nodes[b].y); }
+      c.stroke();
+      this.spawn -= dt;
+      while (this.spawn < 0) {
+        this.spawn += .06;
+        if (this.pulses.length < 90) this.pulses.push({ a: pick(layers[0]), b: pick(layers[1]), t: 0, v: 1.3 + Math.random() * 1.3 });
+      }
+      c.globalCompositeOperation = "lighter";
+      for (let i = this.pulses.length - 1; i >= 0; i--) {
+        const p = this.pulses[i]; p.t += p.v * dt;
+        const A = nodes[p.a], B = nodes[p.b];
+        if (p.t >= 1) {
+          B.a = 1; this.pulses.splice(i, 1);
+          if (B.l < last && Math.random() < .78) this.pulses.push({ a: p.b, b: pick(layers[B.l + 1]), t: 0, v: p.v });
+          continue;
+        }
+        const x = lerp(A.x, B.x, p.t), y = lerp(A.y, B.y, p.t), t0 = Math.max(0, p.t - .18);
+        c.strokeStyle = "rgba(255,74,46,.5)"; c.lineWidth = 1.4;
+        c.beginPath(); c.moveTo(lerp(A.x, B.x, t0), lerp(A.y, B.y, t0)); c.lineTo(x, y); c.stroke();
+        c.fillStyle = "#ff8a60"; c.beginPath(); c.arc(x, y, 1.8, 0, TAU); c.fill();
+      }
+      c.globalCompositeOperation = "source-over";
+      // hovering the sun develops the photo from duotone to colour
+      const near = ptr.active && Math.hypot(ptr.sx * w - (cx + ox), ptr.sy * h - (cy + oy)) < R;
+      this.rv += ((near ? 1 : 0) - this.rv) * Math.min(1, dt * 5);
+      drawSun(c, cx, cy, R, this.rv);
+      const decay = Math.pow(.03, dt);
+      for (const n of nodes) {
+        n.a *= decay;
+        if (Math.hypot(n.x - cx, n.y - cy) < R + 8) continue;
+        if (n.a > .04) { c.fillStyle = `rgba(255,74,46,${n.a * .3})`; c.beginPath(); c.arc(n.x, n.y, 4 + n.a * 12, 0, TAU); c.fill(); }
+        c.fillStyle = `rgb(${lerp(28, 255, n.a) | 0},${lerp(16, 74, n.a) | 0},${lerp(14, 46, n.a) | 0})`;
+        c.strokeStyle = `rgba(235,229,217,${.35 + n.a * .5})`; c.lineWidth = 1;
+        c.beginPath(); c.arc(n.x, n.y, 3.2 + n.a * 2.5, 0, TAU); c.fill(); c.stroke();
+      }
+      const fs = fsz(); mono(c, fs); c.textBaseline = "middle";
+      ["PAPAYA", "GUAVA", "FALL"].forEach((t, k) => {
+        const n = nodes[layers[last][k]];
+        c.fillStyle = `rgba(235,229,217,${.45 + n.a * .55})`; c.fillText(t, n.x + 12, n.y);
+      });
+      c.fillStyle = "rgba(235,229,217,.35)";
+      const topY = this.cy - this.rh / 2 - fs * 1.2;
+      c.fillText("INPUT", nodes[layers[0][0]].x - fs * 1.4, topY);
+      c.fillText("OUTPUT", nodes[layers[last][0]].x - fs * 1.8, topY);
+      if (canHover && this.rv < .5) {
+        c.textAlign = "center"; c.fillStyle = "rgba(235,229,217,.45)";
+        c.fillText("HOVER TO DEVELOP", cx, cy + R + fs * 1.6); c.textAlign = "left";
+      }
+      c.restore();
+    }
+  };
+
+  // II. About: eyes that follow the pointer, with a patch-attention overlay
+  function drawEye(c, x, y, ew, flip, ox, oy, closed) {
+    c.save(); c.translate(x, y); c.scale(flip, 1);
+    c.strokeStyle = C.ink; c.lineCap = "round";
+    if (closed) {
+      c.lineWidth = ew * .05;
+      c.beginPath(); c.moveTo(-ew * .5, ew * .02); c.quadraticCurveTo(0, ew * .14, ew * .52, -ew * .02); c.stroke();
+      c.lineWidth = ew * .03;
+      c.beginPath(); c.moveTo(-ew * .48, -ew * .46); c.quadraticCurveTo(0, -ew * .6, ew * .55, -ew * .44); c.stroke();
+      c.restore(); return;
+    }
+    const upper = () => { c.moveTo(-ew * .5, ew * .02); c.quadraticCurveTo(-ew * .02, -ew * .5, ew * .52, -ew * .06); };
+    c.beginPath(); upper(); c.quadraticCurveTo(ew * .05, ew * .3, -ew * .5, ew * .02); c.closePath();
+    c.fillStyle = "#fbf8f2"; c.fill();
+    c.save(); c.clip();
+    const ix = ew * .02 + ox, iy = -ew * .05 + oy, ir = ew * .21;
+    const ig = c.createLinearGradient(0, iy - ir, 0, iy + ir);
+    ig.addColorStop(0, "#0d0807"); ig.addColorStop(.55, "#4a2e22"); ig.addColorStop(1, "#b07a58");
+    c.fillStyle = ig; c.beginPath(); c.arc(ix, iy, ir, 0, TAU); c.fill();
+    c.lineWidth = ew * .012; c.stroke();
+    c.fillStyle = "#050303"; c.beginPath(); c.arc(ix, iy, ir * .4, 0, TAU); c.fill();
+    c.fillStyle = "#fff";
+    c.beginPath(); c.arc(ix - ir * .35, iy - ir * .35, ir * .24, 0, TAU); c.fill();
+    c.beginPath(); c.arc(ix + ir * .4, iy + ir * .38, ir * .09, 0, TAU); c.fill();
+    c.strokeStyle = "rgba(11,6,6,.28)"; c.lineWidth = ew * .14;
+    c.beginPath(); upper(); c.stroke();
+    c.restore();
+    c.lineWidth = ew * .055; c.beginPath(); upper(); c.stroke();
+    c.lineWidth = ew * .02;
+    for (let i = 0; i < 4; i++) {
+      const sx = ew * (.3 + i * .065), sy = -ew * (.13 - i * .02);
+      c.beginPath(); c.moveTo(sx, sy); c.lineTo(sx + ew * .08, sy - ew * (.06 - i * .008)); c.stroke();
+    }
+    c.lineWidth = ew * .012;
+    c.beginPath(); c.moveTo(-ew * .32, -ew * .2); c.quadraticCurveTo(0, -ew * .5, ew * .42, -ew * .2); c.stroke();
+    c.globalAlpha = .7;
+    c.beginPath(); c.moveTo(-ew * .25, ew * .08); c.quadraticCurveTo(ew * .1, ew * .2, ew * .4, ew * .02); c.stroke();
+    c.globalAlpha = 1; c.lineWidth = ew * .03;
+    c.beginPath(); c.moveTo(-ew * .48, -ew * .5); c.quadraticCurveTo(0, -ew * .66, ew * .55, -ew * .5); c.stroke();
+    c.restore();
+  }
+
+  const sGaze = {
+    init(c, w, h) {
+      const { portrait, narrow } = layout(w, h);
+      c.fillStyle = "#1c0203"; c.fillRect(0, 0, w, h);
+      const n = Math.max(6, Math.round(w / 110)), pw = w / n;
+      for (let i = 0; i < n; i++) {
+        const g = c.createLinearGradient(i * pw, 0, i * pw + pw * .7, 0);
+        g.addColorStop(0, "#3a0306"); g.addColorStop(.5, "#c3121a"); g.addColorStop(1, "#3a0306");
+        c.fillStyle = g; c.fillRect(i * pw + pw * .15, 0, pw * .7, h);
+      }
+      streaks(c, w, h, 7, "#000", .25, 120);
+      const bx = narrow ? w * .03 : w * .08, bw = w - bx * 2;
+      const bh = clamp(Math.min(bw * .3, h * .3), 110, 380), by = (portrait ? h * .28 : h * .34) - bh / 2;
+      c.fillStyle = C.paper; c.fillRect(bx, by, bw, bh);
+      const r = mulberry(5);
+      c.fillStyle = C.ink;
+      for (let x = bx; x < bx + bw; x += 3) { c.globalAlpha = .03 + r() * .06; c.fillRect(x, by, 1, bh); }
+      c.globalAlpha = 1;
+      c.fillRect(bx, by - 2, bw, 3); c.fillRect(bx, by + bh - 1, bw, 3);
+      Object.assign(this, { bx, by, bw, bh, ew: Math.min(bw * .28, bh * 1.05), ey: by + bh * .58, cell: bh / 5 });
+    },
+    draw(c, w, h) {
+      const { bx, by, bw, bh, ew, ey, cell } = this;
+      const eyes = [[w / 2 - bw * .2, -1], [w / 2 + bw * .2, 1]];
+      const bt = T % 4.6, closed = bt < .13 || (Math.floor(T / 4.6) % 3 === 1 && bt > .3 && bt < .42);
+      for (const [x, flip] of eyes) {
+        let ox, oy;
+        if (ptr.active) { ox = clamp((ptr.sx * w - x) / (w * .4), -1, 1) * ew * .11; oy = clamp((ptr.sy * h - ey) / (h * .4), -1, 1) * ew * .05; }
+        else { ox = Math.sin(T * .5) * ew * .07; oy = Math.sin(T * .37) * ew * .02; }
+        drawEye(c, x, ey, ew, flip, ox * flip, oy, closed);
+      }
+      // patch grid + attention heat around a wandering focus
+      c.save(); c.beginPath(); c.rect(bx, by, bw, bh); c.clip();
+      c.fillStyle = "rgba(11,6,6,.08)";
+      for (let x = bx; x < bx + bw; x += cell) c.fillRect(x, by, 1, bh);
+      for (let y = by; y < by + bh; y += cell) c.fillRect(bx, y, bw, 1);
+      const fx = ptr.active ? clamp(ptr.sx * w, bx, bx + bw) : lerp(eyes[0][0], eyes[1][0], .5 + .5 * Math.sin(T * .6));
+      const fy = ptr.active ? clamp(ptr.sy * h, by, by + bh) : ey - ew * .05;
+      c.globalCompositeOperation = "multiply";
+      for (let x = bx; x < bx + bw; x += cell) for (let y = by; y < by + bh; y += cell) {
+        const d = Math.hypot(x + cell / 2 - fx, y + cell / 2 - fy), k = 1 - d / (bh * .95);
+        if (k > 0) { c.fillStyle = `rgba(230,60,40,${(k * k * .55).toFixed(3)})`; c.fillRect(x, y, cell, cell); }
+      }
+      c.restore();
+      const fs = fsz(); mono(c, fs); c.textBaseline = "top"; c.fillStyle = "rgba(11,6,6,.55)";
+      c.fillText(ptr.active ? "PATCH ATTENTION · FOLLOWING YOUR CURSOR" : "PATCH ATTENTION", bx + 10, by + 8);
+    }
+  };
+
+  // III. PlantSense: a papaya leaf scanned window by window, with the class scores settling
+  const CLASSES = ["Anthracnose", "Black spot", "Mealybug", "Mosaic virus", "Ring spot virus", "Healthy"];
+  const sLeaf = {
+    init(c, w, h) {
+      const { wide, portrait } = layout(w, h);
+      c.fillStyle = "#060805"; c.fillRect(0, 0, w, h);
+      let L, cx, cy;
+      this.panel = null;
+      if (wide) {
+        const left = Math.max(w * .38, 490), pw = 190;
+        L = Math.min(M * .3, (w - left - pw - 130) / 2.4);
+        cx = left + L * 1.2; cy = h * .47;
+        this.panel = { x: cx + L * 1.2 + 36, w: pw };
+      } else {
+        L = portrait ? Math.min(w * .34, h * .19) : M * .3;
+        cx = w / 2; cy = portrait ? h * .29 : h * .45;
+      }
+      const glow = c.createRadialGradient(cx, cy, 0, cx, cy, M * .7);
+      glow.addColorStop(0, "rgba(70,110,35,.35)"); glow.addColorStop(1, "rgba(70,110,35,0)");
+      c.fillStyle = glow; c.fillRect(0, 0, w, h);
+      grid(c, w, h, 40, "rgba(235,229,217,.035)");
+      const oy = cy + L * .25;
+      c.strokeStyle = "#5d7a2a"; c.lineWidth = L * .045; c.lineCap = "round";
+      c.beginPath(); c.moveTo(cx, oy); c.quadraticCurveTo(cx + L * .05, oy + L * .6, cx + L * .25, oy + L * 1.05); c.stroke();
+      const n = 7, lobes = [];
+      for (let i = 0; i < n; i++) { const k = i - (n - 1) / 2; lobes.push({ a: -Math.PI / 2 + k * .43, len: L * (1.05 - Math.abs(k) * .13), k }); }
+      lobes.sort((p, q) => Math.abs(q.k) - Math.abs(p.k));
+      for (const lb of lobes) {
+        c.save(); c.translate(cx, oy); c.rotate(lb.a + Math.PI / 2);
+        const g = c.createLinearGradient(0, 0, 0, -lb.len);
+        g.addColorStop(0, "#2f5418"); g.addColorStop(1, "#7fa83e");
+        c.beginPath(); c.moveTo(0, 0);
+        c.bezierCurveTo(lb.len * .38, -lb.len * .22, lb.len * .26, -lb.len * .86, 0, -lb.len);
+        c.bezierCurveTo(-lb.len * .26, -lb.len * .86, -lb.len * .38, -lb.len * .22, 0, 0);
+        c.fillStyle = g; c.fill(); c.strokeStyle = "rgba(10,30,5,.5)"; c.lineWidth = 1; c.stroke();
+        c.strokeStyle = "rgba(200,225,140,.55)"; c.lineWidth = L * .012;
+        c.beginPath(); c.moveTo(0, 0); c.lineTo(0, -lb.len * .94); c.stroke();
+        c.lineWidth = L * .007;
+        for (let j = 1; j <= 4; j++) {
+          const y = -lb.len * j / 5;
+          c.beginPath(); c.moveTo(0, y); c.lineTo(lb.len * .17, y - lb.len * .09); c.moveTo(0, y); c.lineTo(-lb.len * .17, y - lb.len * .09); c.stroke();
+        }
+        c.restore();
+      }
+      const r = mulberry(14); this.lesions = [];
+      for (let i = 0; i < 16; i++) {
+        const lb = lobes[Math.floor(r() * n)], t = .3 + r() * .55, side = (r() - .5) * lb.len * .18;
+        const px = cx + Math.cos(lb.a) * lb.len * t - Math.sin(lb.a) * side, py = oy + Math.sin(lb.a) * lb.len * t + Math.cos(lb.a) * side;
+        const rad = L * (.018 + r() * .03);
+        const halo = c.createRadialGradient(px, py, 0, px, py, rad * 2.4);
+        halo.addColorStop(0, "rgba(232,205,80,.85)"); halo.addColorStop(1, "rgba(232,205,80,0)");
+        c.fillStyle = halo; c.beginPath(); c.arc(px, py, rad * 2.4, 0, TAU); c.fill();
+        c.strokeStyle = "#6b4a12"; c.lineWidth = rad * .35; c.beginPath(); c.arc(px, py, rad, 0, TAU); c.stroke();
+        c.fillStyle = "#3a2a0c"; c.beginPath(); c.arc(px, py, rad * .45, 0, TAU); c.fill();
+        this.lesions.push({ x: px, y: py, r: rad });
+      }
+      const bw = L * 2.4, bx = cx - bw / 2, by = oy - L * 1.2, bh = L * 2.35, k = L * .18;
+      c.strokeStyle = C.ember; c.lineWidth = 2; c.beginPath();
+      for (const [x, y, dx, dy] of [[bx, by, 1, 1], [bx + bw, by, -1, 1], [bx, by + bh, 1, -1], [bx + bw, by + bh, -1, -1]]) {
+        c.moveTo(x + dx * k, y); c.lineTo(x, y); c.lineTo(x, y + dy * k);
+      }
+      c.stroke();
+      const fs = fsz(); mono(c, fs); c.textBaseline = "top"; c.textAlign = "right";
+      c.fillStyle = "rgba(235,229,217,.55)";
+      c.fillText(wide ? "MaxViT-Tiny · ONNX FP16 · ~0.6 s per image on a laptop CPU" : "MaxViT-Tiny · in the browser", bx + bw, by + bh + fs * .8);
+      c.textAlign = "left";
+      Object.assign(this, { bx, by, bw, bh, fs, bars: CLASSES.map(() => .2) });
+    },
+    draw(c, w, h) {
+      const { bx, by, bw, bh, fs } = this;
+      const period = 4.4, ph = (T % period) / period, scanning = ph < .72;
+      const sy = by + bh * clamp(ph / .72);
+      c.fillStyle = "rgba(235,229,217,.07)";
+      for (let i = 1; i < 7; i++) { c.fillRect(bx + bw * i / 7, by, 1, bh); c.fillRect(bx, by + bh * i / 7, bw, 1); }
+      if (scanning) {
+        const row = Math.floor((sy - by) / (bh / 7));
+        c.fillStyle = "rgba(255,74,46,.08)"; c.fillRect(bx, by + row * bh / 7, bw, bh / 7);
+        const sg = c.createLinearGradient(0, sy - 46, 0, sy);
+        sg.addColorStop(0, "rgba(255,74,46,0)"); sg.addColorStop(1, "rgba(255,74,46,.28)");
+        c.fillStyle = sg; c.fillRect(bx, sy - 46, bw, 46);
+        c.fillStyle = C.ember; c.fillRect(bx, sy, bw, 1.5);
+      }
+      for (const l of this.lesions) {
+        if (scanning && l.y > sy) continue;
+        c.strokeStyle = "rgba(255,74,46,.85)"; c.lineWidth = 1.2;
+        c.beginPath(); c.arc(l.x, l.y, l.r * 2.6, 0, TAU); c.stroke();
+        const d = sy - l.y;
+        if (scanning && d >= 0 && d < 40) {
+          c.strokeStyle = `rgba(255,74,46,${(1 - d / 40) * .7})`;
+          c.beginPath(); c.arc(l.x, l.y, l.r * (2.6 + d / 40 * 4), 0, TAU); c.stroke();
+        }
+      }
+      mono(c, fs); c.textBaseline = "middle";
+      const label = scanning ? `ANALYSING · ${Math.round(clamp(ph / .72) * 100)}%` : "PAPAYA RING SPOT VIRUS";
+      const tw = c.measureText(label).width;
+      c.fillStyle = C.ember; c.fillRect(bx, by - fs * 2.2, tw + fs * 1.4, fs * 1.8);
+      c.fillStyle = "#1a0605"; c.fillText(label, bx + fs * .7, by - fs * 1.3);
+      if (!this.panel) return;
+      const { x, w: pw } = this.panel, rowH = fs * 3.2;
+      let y = by + fs * .5;
+      c.fillStyle = "rgba(235,229,217,.6)"; c.fillText("CLASS SCORES", x, y);
+      c.fillStyle = "rgba(235,229,217,.35)"; c.fillText("illustration", x, y + fs * 1.5);
+      y += fs * 3.6;
+      CLASSES.forEach((name, i) => {
+        const target = scanning ? .12 + .5 * Math.abs(Math.sin(T * 2.6 + i * 1.9)) * (1 - clamp(ph / .72) * .6) : (i === 4 ? .94 : .03 + i * .008);
+        this.bars[i] += (target - this.bars[i]) * Math.min(1, dt * 7);
+        const hot = !scanning && i === 4;
+        c.fillStyle = hot ? C.ember : "rgba(235,229,217,.7)"; c.fillText(name.toUpperCase(), x, y);
+        c.fillStyle = "rgba(235,229,217,.1)"; c.fillRect(x, y + fs * .9, pw, 5);
+        c.fillStyle = hot ? C.ember : "rgba(235,229,217,.55)"; c.fillRect(x, y + fs * .9, pw * this.bars[i], 5);
+        y += rowH;
+      });
+    }
+  };
+
+  // IV. Guava: a wipe between the input leaf and its Grad-CAM, beside the real six-model results
+  const MODELS = [
+    ["ConvNeXtV2 + SSA", 99.79, 74.05], ["DINOv2 ViT-S/14", 99.79, 76.34], ["Multimodal fusion", 100, 78.63],
+    ["MobileNetV2 + BEiT", 99.59, 71.76], ["ConvTransNet-S", 98.56, 66.41], ["HybridConvMixer + ViT", 99.38, 61.83]
+  ];
+  function guavaPanel(s, cam) {
+    const cv = document.createElement("canvas"); cv.width = Math.round(s * DPR); cv.height = Math.round(s * DPR);
+    const c = cv.getContext("2d"); c.scale(DPR, DPR);
+    c.fillStyle = "#1b2614"; c.fillRect(0, 0, s, s);
+    c.translate(s / 2, s / 2); c.rotate(-.55);
+    const len = s * .82, wd = s * .3;
+    c.beginPath(); c.moveTo(-len / 2, 0);
+    c.bezierCurveTo(-len * .2, -wd, len * .25, -wd * .95, len / 2, 0);
+    c.bezierCurveTo(len * .25, wd * .95, -len * .2, wd, -len / 2, 0);
+    const g = c.createLinearGradient(0, -wd, 0, wd);
+    g.addColorStop(0, "#86ad45"); g.addColorStop(1, "#3c6420");
+    c.fillStyle = g; c.fill();
+    c.strokeStyle = "rgba(225,240,170,.6)"; c.lineWidth = s * .008;
+    c.beginPath(); c.moveTo(-len / 2, 0); c.lineTo(len * .48, 0); c.stroke();
+    c.lineWidth = s * .004;
+    for (let i = -4; i <= 4; i++) {
+      const x = i * len * .1;
+      c.beginPath(); c.moveTo(x, 0); c.quadraticCurveTo(x + len * .05, -wd * .4, x + len * .1, -wd * .72); c.stroke();
+      c.beginPath(); c.moveTo(x, 0); c.quadraticCurveTo(x + len * .05, wd * .4, x + len * .1, wd * .72); c.stroke();
+    }
+    const r = mulberry(4), spots = [];
+    for (let i = 0; i < 9; i++) {
+      const x = len * (.06 + r() * .22), y = (r() - .5) * wd * .9, rad = s * (.014 + r() * .026);
+      spots.push([x, y, rad]);
+      c.fillStyle = "#8a6a2a"; c.beginPath(); c.arc(x, y, rad * 1.35, 0, TAU); c.fill();
+      c.fillStyle = "#3e2508"; c.beginPath(); c.arc(x, y, rad, 0, TAU); c.fill();
+    }
+    if (cam) {
+      c.setTransform(DPR, 0, 0, DPR, 0, 0);
+      c.fillStyle = "rgba(30,40,150,.45)"; c.fillRect(0, 0, s, s);
+      c.translate(s / 2, s / 2); c.rotate(-.55);
+      for (const [x, y, rad] of spots) {
+        const hg = c.createRadialGradient(x, y, 0, x, y, rad * 5.5);
+        hg.addColorStop(0, "rgba(255,30,20,.75)"); hg.addColorStop(.35, "rgba(255,200,40,.45)");
+        hg.addColorStop(.7, "rgba(60,210,140,.18)"); hg.addColorStop(1, "rgba(60,210,140,0)");
+        c.fillStyle = hg; c.beginPath(); c.arc(x, y, rad * 5.5, 0, TAU); c.fill();
+      }
+    }
+    return cv;
+  }
+  const sGuava = {
+    init(c, w, h) {
+      const { wide, portrait } = layout(w, h);
+      c.fillStyle = "#e7e1d5"; c.fillRect(0, 0, w, h);
+      grid(c, w, h, 32, "rgba(11,6,6,.06)");
+      let s, px, py, chart = null;
+      if (wide) {
+        const left = Math.max(w * .4, 500), right = w - 70;
+        s = Math.min(h * .5, (right - left) * .46);
+        px = left; py = h * .44 - s / 2;
+        if (right - (px + s + 48) > 230) chart = { x0: px + s + 48, x1: right, y0: py, h: s };
+        else px = (left + right - s) / 2;
+      } else {
+        s = Math.min(w * .84, portrait ? h * .3 : h * .5);
+        px = (w - s) / 2; py = portrait ? h * .1 : h * .12;
+      }
+      this.inp = guavaPanel(s, false); this.cam = guavaPanel(s, true);
+      c.drawImage(this.inp, px, py, s, s);
+      c.strokeStyle = C.ink; c.lineWidth = 1; c.strokeRect(px + .5, py + .5, s - 1, s - 1);
+      const fs = fsz(); mono(c, fs); c.fillStyle = C.ink; c.textBaseline = "top";
+      c.fillText("GUAVA LEAF · INPUT ⟷ GRAD-CAM", px, py + s + fs * .8);
+      Object.assign(this, { s, px, py, chart, fs });
+    },
+    draw(c, w, h, lp) {
+      const { s, px, py, chart, fs } = this;
+      const wx = s * (.5 + .42 * Math.sin(T * .9));
+      c.save(); c.beginPath(); c.rect(px + wx, py, s - wx, s); c.clip();
+      c.drawImage(this.cam, px, py, s, s); c.restore();
+      c.fillStyle = C.paper; c.fillRect(px + wx - 1, py, 2, s);
+      c.fillStyle = C.ink; c.beginPath(); c.arc(px + wx, py + s / 2, fs * 1.3, 0, TAU); c.fill();
+      mono(c, fs); c.textBaseline = "middle"; c.textAlign = "center"; c.fillStyle = C.paper;
+      c.fillText("‹ ›", px + wx, py + s / 2);
+      c.textAlign = "left"; c.textBaseline = "top"; c.fillStyle = "rgba(235,229,217,.85)";
+      if (wx > fs * 6) c.fillText("INPUT", px + 8, py + 8);
+      c.textAlign = "right";
+      if (s - wx > fs * 9) c.fillText("GRAD-CAM", px + s - 8, py + 8);
+      c.textAlign = "left";
+      if (!chart) return;
+      const g = reduced ? 1 : easeOut(clamp((lp + .4) / .5));
+      const { x0, x1, y0 } = chart, maxW = x1 - x0 - fs * 5;
+      c.fillStyle = C.ink; c.fillText("TEST ACCURACY · SIX MODELS, ONE RECIPE", x0, y0);
+      c.fillStyle = C.ink; c.fillRect(x0, y0 + fs * 1.9, 9, 9);
+      c.fillStyle = C.muted || "#5b524a"; c.fillText("LEAF", x0 + 14, y0 + fs * 1.7);
+      c.fillStyle = C.blood; c.fillRect(x0 + fs * 5, y0 + fs * 1.9, 9, 9);
+      c.fillStyle = "#5b524a"; c.fillText("FRUIT", x0 + fs * 5 + 14, y0 + fs * 1.7);
+      const top = y0 + fs * 4, rowH = (chart.h - fs * 4) / MODELS.length;
+      c.fillStyle = "rgba(11,6,6,.12)";
+      for (const v of [0, 50, 100]) c.fillRect(x0 + maxW * v / 100, top - 4, 1, rowH * MODELS.length);
+      MODELS.forEach(([name, leaf, fruit], i) => {
+        const y = top + i * rowH;
+        c.fillStyle = C.ink; c.fillText(name, x0, y);
+        const lw = maxW * leaf / 100 * g, fw = maxW * fruit / 100 * g;
+        c.fillStyle = C.ink; c.fillRect(x0, y + fs * 1.45, lw, 6);
+        c.fillStyle = C.blood; c.fillRect(x0, y + fs * 1.45 + 8, fw, 6);
+        c.fillStyle = "#5b524a";
+        c.fillText((leaf * g).toFixed(2) + "%", x0 + lw + 6, y + fs * 1.05);
+        c.fillStyle = C.blood; c.fillText((fruit * g).toFixed(2) + "%", x0 + fw + 6, y + fs * 1.05 + 9);
+      });
+      c.fillStyle = "#5b524a"; c.fillText("0%", x0, top + rowH * MODELS.length + 2);
+      c.textAlign = "right"; c.fillText("100%", x0 + maxW, top + rowH * MODELS.length + 2); c.textAlign = "left";
+    }
+  };
+
+  // V. NanoSense: a live wrist trace; every few seconds a fall lands inside the 2 s window
+  const fallG = (tt) => {
+    const ph = ((tt % 7) + 7) % 7;
+    if (ph < 4.2) return 1 + .28 * Math.sin(tt * TAU * 1.8) + .1 * Math.sin(tt * TAU * 4.3 + 1) + .04 * Math.sin(tt * 37);
+    if (ph < 4.45) return lerp(1, .2, (ph - 4.2) / .25);
+    if (ph < 5.4) { const k = (ph - 4.45) / .95; return 1 + 3.8 * Math.exp(-k * 5) * Math.abs(Math.cos(k * 30)); }
+    return 1 + .03 * Math.sin(tt * 23);
+  };
+  const sWave = {
+    init(c, w, h) {
+      const { wide, portrait } = layout(w, h);
+      c.fillStyle = "#0a0707"; c.fillRect(0, 0, w, h);
+      const fs = fsz();
+      const left = Math.max(w * .06, fs * 3.4), right = wide ? w - Math.min(520, w * .42) : w * .94;
+      const top = portrait ? h * .11 : h * .17, bot = portrait ? h * .31 : (wide ? h * .62 : h * .48);
+      const gy = (g) => bot - (g / 5) * (bot - top);
+      c.fillStyle = "rgba(235,229,217,.05)";
+      for (let i = 0; i <= 24; i++) c.fillRect(left + (right - left) * i / 24, top, 1, bot - top);
+      mono(c, fs); c.textBaseline = "middle";
+      for (const g of [0, 1, 2, 3, 4, 5]) {
+        c.fillStyle = "rgba(235,229,217,.08)"; c.fillRect(left, gy(g), right - left, 1);
+        c.fillStyle = "rgba(235,229,217,.45)"; c.textAlign = "right"; c.fillText(g + " g", left - 8, gy(g));
+      }
+      c.textAlign = "left";
+      c.setLineDash([6, 6]); c.strokeStyle = "rgba(255,74,46,.55)"; c.lineWidth = 1;
+      c.beginPath(); c.moveTo(left, gy(4)); c.lineTo(right, gy(4)); c.stroke(); c.setLineDash([]);
+      c.fillStyle = "rgba(255,74,46,.75)"; c.fillText("4 g threshold (the baseline it beats)", left + 6, gy(4) - fs);
+      c.fillStyle = "rgba(235,229,217,.4)";
+      c.fillText(portrait ? "MPU6050 · |A| IN g · 100 Hz" : "MPU6050 · |A| IN g · 100 Hz · SIMULATED WRIST TRACE", left, bot + fs * 1.6);
+      Object.assign(this, { left, right, top, bot, gy, fs, p: .03, portrait });
+    },
+    draw(c, w, h) {
+      const { left, right, top, bot, gy, fs } = this, span = 6;
+      const wx = lerp(left, right, 4 / 6);
+      c.fillStyle = "rgba(195,18,26,.1)"; c.fillRect(wx, top, right - wx, bot - top);
+      c.setLineDash([4, 4]); c.strokeStyle = "rgba(255,74,46,.6)"; c.strokeRect(wx, top, right - wx, bot - top); c.setLineDash([]);
+      mono(c, fs); c.textBaseline = "middle"; c.fillStyle = "rgba(255,74,46,.9)";
+      c.fillText(this.portrait ? "LAST 2 s" : "LAST 2 s · READ EVERY 200 ms", wx + 6, top + fs);
+      c.lineJoin = "round";
+      for (const hot of [false, true]) {
+        c.strokeStyle = hot ? C.ember : C.paper; c.lineWidth = hot ? 2.2 : 1.4; c.beginPath();
+        let started = false;
+        for (let x = hot ? wx : left; x <= right; x += 2) {
+          const y = gy(clamp(fallG(T - span + span * (x - left) / (right - left)), 0, 5));
+          if (!started) { c.moveTo(x, y); started = true; } else c.lineTo(x, y);
+        }
+        c.stroke();
+      }
+      const ny = gy(clamp(fallG(T), 0, 5));
+      c.fillStyle = C.ember; c.beginPath(); c.arc(right, ny, 3.5, 0, TAU); c.fill();
+      const ph = ((T % 7) + 7) % 7, impact = ph >= 4.45 && ph < 6.45;
+      this.p += ((impact ? .97 : .03) - this.p) * Math.min(1, dt * 8);
+      const alert = this.p > .85;
+      const my = bot + fs * 4.2, mw = Math.min(280, right - left);
+      c.fillStyle = "rgba(235,229,217,.6)"; c.fillText(`P(FALL) ${this.p.toFixed(2)}`, left, my);
+      const mx = left + fs * 9;
+      const meterW = Math.max(60, mw - fs * 9);
+      c.fillStyle = "rgba(235,229,217,.1)"; c.fillRect(mx, my - 4, meterW, 8);
+      c.fillStyle = alert ? C.ember : "rgba(235,229,217,.6)"; c.fillRect(mx, my - 4, meterW * this.p, 8);
+      c.fillStyle = C.paper; c.fillRect(mx + meterW * .85, my - 8, 1.5, 16);
+      const blink = .5 + .5 * Math.sin(T * 14);
+      c.fillStyle = alert ? `rgba(255,74,46,${.6 + .4 * blink})` : "rgba(235,229,217,.45)";
+      c.fillText(alert ? (this.portrait ? "FALL → SMS SENT" : "FALL DETECTED → SMS TO 3 FAMILY CONTACTS") : (this.portrait ? "MONITORING" : "MONITORING · 923 PARAMS · 2.9 ms PER WINDOW"), left, my + fs * 2);
+      if (alert && !reduced) { c.strokeStyle = `rgba(255,74,46,${.35 * blink})`; c.lineWidth = 6; c.strokeRect(3, 3, w - 6, h - 6); }
+    }
+  };
+
+  // VI. DIU Student Hub: the community as a live graph around the platform's features
+  const ROLES = [["STUDENTS", C.paper], ["FACULTY", C.ember], ["ALUMNI", C.gold]];
+  const sHub = {
+    init(c, w, h) {
+      const { wide, portrait } = layout(w, h), r = mulberry(61);
+      const g = c.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0, "#1e0204"); g.addColorStop(1, "#070303");
+      c.fillStyle = g; c.fillRect(0, 0, w, h);
+      streaks(c, w, h, 9, "#c3121a", .06, 80);
+      const cx = wide ? w * .64 : w / 2, cy = wide ? h * .5 : (portrait ? h * .28 : h * .38);
+      const rx = wide ? w * .25 : w * .34, ry = wide ? h * .3 : (portrait ? h * .16 : h * .25);
+      const spread = wide ? 110 : 52, per = wide ? 12 : 7;
+      const hubs = ["Feed", "Notes", "Housing", "Research", "Mentoring", "Events"];
+      this.nodes = []; this.edges = [];
+      hubs.forEach((name, i) => {
+        const a = -Math.PI / 2 + i * TAU / hubs.length;
+        this.nodes.push({ x: cx + Math.cos(a) * rx, y: cy + Math.sin(a) * ry, hub: name, role: 1, p: r() * TAU });
+      });
+      for (let i = 0; i < hubs.length; i++) this.edges.push([i, (i + 1) % hubs.length]);
+      hubs.forEach((_, hi) => {
+        const hb = this.nodes[hi];
+        for (let k = 0; k < per; k++) {
+          const a = r() * TAU, d = spread * (.35 + r() * .65);
+          const q = r(), role = q < .6 ? 0 : (q < .8 ? 1 : 2);
+          this.nodes.push({ x: hb.x + Math.cos(a) * d, y: hb.y + Math.sin(a) * d, role, p: r() * TAU });
+          const id = this.nodes.length - 1;
+          this.edges.push([hi, id]);
+          if (r() < .35) this.edges.push([id, hubs.length + Math.floor(r() * (this.nodes.length - hubs.length))]);
+        }
+      });
+      this.pulses = [];
+      const fs = fsz(); this.fs = fs;
+      mono(c, fs); c.textBaseline = "middle";
+      let lx = wide ? w - 70 - 300 : 16, ly = wide ? h - 70 : (portrait ? h * .5 : h * .7);
+      if (!wide) ly = Math.min(ly, h * .62);
+      ROLES.forEach(([t, col]) => {
+        c.fillStyle = col; c.beginPath(); c.arc(lx + 4, ly, 4, 0, TAU); c.fill();
+        c.fillStyle = "rgba(235,229,217,.6)"; c.fillText(t, lx + 14, ly);
+        lx += c.measureText(t).width + 34;
+      });
+    },
+    pos(n) { return [n.x + Math.sin(T * .7 + n.p) * 5, n.y + Math.cos(T * .55 + n.p) * 5]; },
+    draw(c, w, h) {
+      const P = this.nodes.map((n) => this.pos(n));
+      c.strokeStyle = "rgba(235,229,217,.1)"; c.lineWidth = 1; c.beginPath();
+      for (const [a, b] of this.edges) { c.moveTo(P[a][0], P[a][1]); c.lineTo(P[b][0], P[b][1]); }
+      c.stroke();
+      while (this.pulses.length < 46) this.pulses.push({ e: pick(this.edges), t: 0, v: .5 + Math.random() * .8, dir: Math.random() < .5 });
+      c.globalCompositeOperation = "lighter";
+      for (let i = this.pulses.length - 1; i >= 0; i--) {
+        const p = this.pulses[i]; p.t += p.v * dt;
+        if (p.t >= 1) { this.pulses.splice(i, 1); continue; }
+        const [a, b] = p.dir ? p.e : [p.e[1], p.e[0]];
+        const x = lerp(P[a][0], P[b][0], p.t), y = lerp(P[a][1], P[b][1], p.t);
+        c.fillStyle = ROLES[this.nodes[a].role][1]; c.globalAlpha = .9;
+        c.beginPath(); c.arc(x, y, 1.8, 0, TAU); c.fill();
+      }
+      c.globalAlpha = 1; c.globalCompositeOperation = "source-over";
+      if (ptr.active) {
+        for (let i = 0; i < P.length; i++) {
+          const d = Math.hypot(P[i][0] - ptr.sx * w, P[i][1] - ptr.sy * h);
+          if (d < 160) { c.strokeStyle = `rgba(255,74,46,${(1 - d / 160) * .6})`; c.beginPath(); c.moveTo(ptr.sx * w, ptr.sy * h); c.lineTo(P[i][0], P[i][1]); c.stroke(); }
+        }
+      }
+      mono(c, this.fs); c.textBaseline = "middle";
+      this.nodes.forEach((n, i) => {
+        const [x, y] = P[i];
+        if (n.hub) {
+          c.fillStyle = "#2a0406"; c.strokeStyle = C.ember; c.lineWidth = 1.5;
+          c.beginPath(); c.arc(x, y, 7, 0, TAU); c.fill(); c.stroke();
+          c.fillStyle = C.paper; c.fillText(n.hub.toUpperCase(), x + 12, y - 12);
+        } else {
+          c.fillStyle = ROLES[n.role][1]; c.beginPath(); c.arc(x, y, 2.6, 0, TAU); c.fill();
+        }
+      });
+    }
+  };
+
+  // VII. Papers and data: the BDPapayaDisease dataset as a mosaic, revealed as you arrive
+  const DCLASSES = [["Anthracnose", "#a8622a"], ["Black spot", "#4a3c34"], ["Leaf curl", "#bfa83c"], ["Mealybug", "#d9d2c3"], ["Mosaic virus", "#8fb043"], ["Healthy", "#3f7f2c"]];
+  const sData = {
+    init(c, w, h) {
+      const r = mulberry(23);
+      c.fillStyle = "#0b0907"; c.fillRect(0, 0, w, h);
+      const cell = Math.max(10, Math.round(M / 52));
+      this.mosaic = document.createElement("canvas"); this.mosaic.width = stage.width; this.mosaic.height = stage.height;
+      const m = this.mosaic.getContext("2d"); m.scale(DPR, DPR);
+      for (let x = 0; x < w; x += cell) for (let y = 0; y < h; y += cell) {
+        const k = Math.floor(r() * DCLASSES.length);
+        m.globalAlpha = .28 + r() * .32; m.fillStyle = DCLASSES[k][1];
+        m.fillRect(x + 1, y + 1, cell - 2, cell - 2);
+      }
+      Object.assign(this, { cell, fs: fsz() });
+    },
+    draw(c, w, h, lp) {
+      const rv = reduced ? 1 : easeOut(clamp((lp + .35) / .5));
+      c.save(); c.setTransform(1, 0, 0, 1, 0, 0); c.drawImage(this.mosaic, 0, 0); c.restore();
+      c.fillStyle = "#0b0907"; c.beginPath();
+      const k = rv * 2;
+      if (k <= 1) { c.moveTo(k * w, 0); c.lineTo(w, 0); c.lineTo(w, h); c.lineTo(0, h); c.lineTo(0, k * h); }
+      else { const q = k - 1; c.moveTo(w, q * h); c.lineTo(w, h); c.lineTo(q * w, h); }
+      c.closePath(); if (rv < 1) c.fill();
+      const sx = ((T * 140) % (w + 300)) - 150;
+      const sg = c.createLinearGradient(sx - 80, 0, sx + 80, 0);
+      sg.addColorStop(0, "rgba(235,229,217,0)"); sg.addColorStop(.5, "rgba(235,229,217,.08)"); sg.addColorStop(1, "rgba(235,229,217,0)");
+      c.fillStyle = sg; c.fillRect(sx - 80, 0, 160, h);
+      const r = mulberry(Math.floor(T * 3)), cell = this.cell;
+      c.strokeStyle = "rgba(255,74,46,.8)"; c.lineWidth = 1;
+      for (let i = 0; i < 14; i++) {
+        const x = Math.floor(r() * w / cell) * cell, y = Math.floor(r() * h / cell) * cell;
+        if ((x / w + y / h) / 2 < rv) c.strokeRect(x + .5, y + .5, cell - 1, cell - 1);
+      }
+      // counter and legend, top-left under the header
+      const fs = this.fs, x0 = Math.max(16, w * .02), y0 = 84;
+      c.fillStyle = "rgba(11,9,7,.72)"; c.fillRect(x0 - 10, y0 - 10, Math.min(w - 2 * x0 + 20, 520), fs * (w < 560 ? 12.8 : 11));
+      c.textBaseline = "top"; c.fillStyle = C.paper;
+      c.font = `800 ${Math.round(fs * 3.6)}px ${DISPLAY}`;
+      c.fillText(Math.round(4506 * rv).toLocaleString("en-US"), x0, y0);
+      mono(c, fs); c.fillStyle = "rgba(235,229,217,.7)";
+      c.fillText("IMAGES · BDPapayaDisease · 6 CLASSES · 5 DISTRICTS", x0, y0 + fs * 4.4);
+      let lx = x0, ly = y0 + fs * 6.6;
+      for (const [name, col] of DCLASSES) {
+        const tw = c.measureText(name.toUpperCase()).width + 30;
+        if (lx + tw > Math.min(w - 16, x0 + 500)) { lx = x0; ly += fs * 1.7; }
+        c.fillStyle = col; c.fillRect(lx, ly + 1, 9, 9);
+        c.fillStyle = "rgba(235,229,217,.7)"; c.fillText(name.toUpperCase(), lx + 14, ly);
+        lx += tw;
+      }
+    }
+  };
+
+  // VIII. Contact: the curtain, with a spotlight that follows you
+  const sCurtain = {
+    init(c, w, h) {
+      const folds = Math.max(8, Math.round(w / 90));
+      for (let x = 0; x < w; x += 2) {
+        const s = .5 + .5 * Math.sin((x / w) * folds * TAU + Math.sin(x * .013) * .6), k = Math.pow(s, 1.6);
+        c.fillStyle = `rgb(${lerp(55, 232, k) | 0},${lerp(3, 28, k) | 0},${lerp(6, 30, k) | 0})`;
+        c.fillRect(x, 0, 2, h);
+      }
+      const shade = c.createLinearGradient(0, 0, 0, h);
+      shade.addColorStop(0, "rgba(0,0,0,.55)"); shade.addColorStop(.25, "rgba(0,0,0,0)"); shade.addColorStop(.78, "rgba(0,0,0,.25)"); shade.addColorStop(1, "rgba(0,0,0,.9)");
+      c.fillStyle = shade; c.fillRect(0, 0, w, h);
+      c.fillStyle = "#2a0204"; c.beginPath(); c.moveTo(0, 0); c.lineTo(w, 0); c.lineTo(w, h * .08);
+      const sc = Math.max(5, Math.round(w / 160));
+      for (let i = sc; i >= 0; i--) c.quadraticCurveTo(w * (i + .5) / sc, h * .14, w * i / sc, h * .08);
+      c.closePath(); c.fill();
+      c.fillStyle = "#0a0505"; c.fillRect(0, h * .82, w, h * .18);
+      streaks(c, w, h, 31, "#000", .12, 64);
+      this.dust = Array.from({ length: 40 }, () => ({ x: Math.random(), y: Math.random(), v: .01 + Math.random() * .03 }));
+    },
+    draw(c, w, h) {
+      const sx = ptr.active ? ptr.sx * w : w / 2 + Math.sin(T * .4) * w * .2, fy = h * .84, rw = Math.max(w * .16, 120);
+      c.save(); c.globalCompositeOperation = "lighter";
+      const cone = c.createLinearGradient(0, 0, 0, fy);
+      cone.addColorStop(0, "rgba(255,220,190,.02)"); cone.addColorStop(1, "rgba(255,220,190,.12)");
+      c.fillStyle = cone; c.beginPath(); c.moveTo(sx - 20, 0); c.lineTo(sx + 20, 0); c.lineTo(sx + rw, fy); c.lineTo(sx - rw, fy); c.closePath(); c.fill();
+      c.save(); c.translate(sx, fy); c.scale(1, .18);
+      const pool = c.createRadialGradient(0, 0, 0, 0, 0, rw * 1.2);
+      pool.addColorStop(0, "rgba(255,220,190,.4)"); pool.addColorStop(1, "rgba(255,220,190,0)");
+      c.fillStyle = pool; c.beginPath(); c.arc(0, 0, rw * 1.2, 0, TAU); c.fill(); c.restore();
+      c.fillStyle = "rgba(255,235,215,.5)";
+      for (const d of this.dust) {
+        d.y -= d.v * dt; if (d.y < 0) d.y = 1;
+        const y = d.y * fy, half = lerp(20, rw, d.y), x = sx + (d.x - .5) * 2 * half;
+        c.beginPath(); c.arc(x, y, 1.1, 0, TAU); c.fill();
+      }
+      c.restore();
+    }
+  };
+
+  const SCENES = [sNet, sGaze, sLeaf, sGuava, sWave, sHub, sData, sCurtain];
+  const EMBERS = [.6, .4, .15, 0, .25, .35, 0, .8];
+  const N = SCENES.length;
+  const caches = SCENES.map(() => document.createElement("canvas"));
+  const bufA = document.createElement("canvas"), bufB = document.createElement("canvas");
+  let colNoise = [], vignette, grain;
+
+  function paint() {
+    DPR = Math.min(window.devicePixelRatio || 1, 1.5);
+    W = stage.clientWidth; H = stage.clientHeight; M = Math.min(W, H);
+    stage.width = Math.round(W * DPR); stage.height = Math.round(H * DPR);
+    for (const b of [bufA, bufB]) { b.width = stage.width; b.height = stage.height; }
+    SCENES.forEach((s, i) => {
+      const cv = caches[i]; cv.width = stage.width; cv.height = stage.height;
+      const c = cv.getContext("2d"); c.setTransform(DPR, 0, 0, DPR, 0, 0); s.init(c, W, H);
+    });
+    const cw = Math.max(3, Math.round(W / 160)), r = mulberry(99);
+    colNoise = [];
+    let smooth = r();
+    for (let x = 0; x < W; x += cw) { smooth = lerp(smooth, r(), .35); colNoise.push({ x, w: cw, n: clamp(smooth * .7 + r() * .3), d: .4 + r() * .6 }); }
+    vignette = document.createElement("canvas"); vignette.width = stage.width; vignette.height = stage.height;
+    const vc = vignette.getContext("2d");
+    const vg = vc.createRadialGradient(stage.width / 2, stage.height / 2, Math.min(stage.width, stage.height) * .35, stage.width / 2, stage.height / 2, Math.max(stage.width, stage.height) * .75);
+    vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, "rgba(0,0,0,.45)");
+    vc.fillStyle = vg; vc.fillRect(0, 0, stage.width, stage.height);
+    if (!grain) {
+      const gc = document.createElement("canvas"); gc.width = gc.height = 160;
+      const gx = gc.getContext("2d"), id = gx.createImageData(160, 160);
+      for (let i = 0; i < id.data.length; i += 4) { const v = Math.random() * 255; id.data[i] = id.data[i + 1] = id.data[i + 2] = v; id.data[i + 3] = 40; }
+      gx.putImageData(id, 0, 0); grain = ctx.createPattern(gc, "repeat");
+    }
+  }
+
+  function renderScene(i, buf, lp) {
+    const c = buf.getContext("2d");
+    c.setTransform(1, 0, 0, 1, 0, 0); c.globalAlpha = 1; c.globalCompositeOperation = "source-over";
+    c.drawImage(caches[i], 0, 0);
+    c.setTransform(DPR, 0, 0, DPR, 0, 0);
+    SCENES[i].draw(c, W, H, lp);
+  }
+
+  /* ---------- the melt transition ---------- */
+  function compose(A, B, t, fr) {
+    const Hp = stage.height;
+    if (t <= .001) return ctx.drawImage(A, 0, 0);
+    if (t >= .999) return ctx.drawImage(B, 0, 0);
+    if (reduced) { ctx.drawImage(A, 0, 0); ctx.globalAlpha = t; ctx.drawImage(B, 0, 0); ctx.globalAlpha = 1; return; }
+    for (const col of colNoise) {
+      const X = Math.round(col.x * DPR), CW = Math.ceil(col.w * DPR) + 1, at = .12 + col.n * .76;
+      if (t < at) {
+        const k = Math.pow(t / at, 2) * .9 * col.d;
+        ctx.drawImage(A, X, 0, CW, Math.max(1, Hp * (1 - k)), X, 0, CW, Hp);
+      } else {
+        const k = Math.pow(1 - (t - at) / (1 - at), 2) * .9 * col.d, off = Hp * k;
+        ctx.drawImage(B, X, off, CW, Math.max(1, Hp - off), X, 0, CW, Hp);
+      }
+    }
+    const amt = Math.sin(t * Math.PI);
+    if (amt > .35) {
+      const r = mulberry(fr >> 2);
+      for (let i = 0; i < 5; i++) {
+        const y = r() * Hp, bh = (4 + r() * 30) * DPR, dx = (r() - .5) * 80 * DPR * amt;
+        ctx.drawImage(stage, 0, y, stage.width, bh, dx, y, stage.width, bh);
+      }
+    }
+  }
+
+  const embers = Array.from({ length: 70 }, () => ({ x: Math.random(), y: Math.random(), v: .0006 + Math.random() * .0016, s: .6 + Math.random() * 1.8, p: Math.random() * 6 }));
+  function drawEmbers(intensity, fr) {
+    if (intensity < .02 || reduced) return;
+    ctx.save(); ctx.globalCompositeOperation = "lighter";
+    for (const e of embers) {
+      e.y -= e.v; if (e.y < -.02) { e.y = 1.02; e.x = Math.random(); }
+      ctx.globalAlpha = intensity * (.35 + .35 * Math.sin(fr * .05 + e.p));
+      ctx.fillStyle = "#ff6a3a"; ctx.beginPath();
+      ctx.arc((e.x + Math.sin(fr * .01 + e.p) * .01) * stage.width, e.y * stage.height, e.s * DPR, 0, TAU); ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  /* ---------- scroll, cards, counters, rail, cursor ---------- */
+  const sections = [...document.querySelectorAll(".chapter")];
+  const floaters = [...document.querySelectorAll("[data-i]")];
+  const hudCh = document.getElementById("hudCh"), hudName = document.getElementById("hudName");
+  const hudTc = document.getElementById("hudTc"), hudBar = document.getElementById("hudBar");
+  const cursor = document.getElementById("cursor");
+  let target = 0, cur = 0, fr = 0, lastCh = -1, lastNow = performance.now();
+
+  floaters.forEach((card) => [...card.children].forEach((ch, k) => ch.style.setProperty("--k", k)));
+
+  // count-up for the big numbers, keeping their units and separators
+  const counters = [];
+  floaters.forEach((card) => card.querySelectorAll(".stats b").forEach((b) => {
+    const text = b.textContent, m = text.match(/\d[\d,]*(\.\d+)?/);
+    if (!m) return;
+    const raw = m[0], to = parseFloat(raw.replace(/,/g, ""));
+    counters.push({ card, b, pre: text.slice(0, m.index), post: text.slice(m.index + raw.length), to, dec: (raw.split(".")[1] || "").length, comma: raw.includes(","), start: -1 });
+  }));
+  const fmt = (v, c) => c.comma ? Math.round(v).toLocaleString("en-US") : v.toFixed(c.dec);
+
+  function readScroll() {
+    const y = window.scrollY;
+    let i = 0;
+    while (i < N - 1 && y >= sections[i + 1].offsetTop) i++;
+    target = i + clamp((y - sections[i].offsetTop) / sections[i].offsetHeight);
+  }
+
+  const pad = (n) => String(n).padStart(2, "0");
+  function tick(now) {
+    fr++;
+    dt = reduced ? 0 : Math.min(.05, (now - lastNow) / 1000); lastNow = now;
+    T = reduced ? 2.6 : T + dt;
+    cur += (target - cur) * (reduced ? 1 : .12);
+    if (Math.abs(target - cur) < .0005) cur = target;
+    ptr.sx += (ptr.x - ptr.sx) * .08; ptr.sy += (ptr.y - ptr.sy) * .08;
+
+    const idx = Math.min(N - 1, Math.floor(cur)), f = cur - idx;
+    const t = idx >= N - 1 ? 0 : clamp((f - .55) / .45);
+    const e = t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    renderScene(idx, bufA, cur - idx);
+    if (e > .001) renderScene(idx + 1, bufB, cur - idx - 1);
+    compose(bufA, bufB, e, fr);
+    drawEmbers(lerp(EMBERS[idx], EMBERS[Math.min(N - 1, idx + 1)], e), fr);
+    ctx.drawImage(vignette, 0, 0);
+    if (!reduced) {
+      ctx.save(); ctx.globalAlpha = .5; ctx.translate((fr * 37) % 160, (fr * 53) % 160);
+      ctx.fillStyle = grain; ctx.fillRect(-160, -160, stage.width + 320, stage.height + 320); ctx.restore();
+    }
+
+    for (const el of floaters) {
+      const d = cur - (+el.dataset.i + .22);
+      const a = clamp(1 - (Math.abs(d) - .25) / .18);
+      el.style.opacity = Math.min(1, a * 1.6).toFixed(3);
+      el.style.setProperty("--a", a.toFixed(3));
+      el.style.transform = `translateY(${(-d * 50).toFixed(1)}px)`;
+      el.style.visibility = a < .01 ? "hidden" : "visible";
+      el.style.pointerEvents = a < .5 ? "none" : "auto";
+      el._a = a;
+    }
+    for (const c of counters) {
+      if (c.card._a > .6 && c.start < 0) c.start = now;
+      if (c.card._a < .02) c.start = -1;
+      const k = reduced || c.start < 0 ? (c.start < 0 && !reduced ? 0 : 1) : easeOut(clamp((now - c.start) / 1100));
+      const txt = c.pre + fmt(c.to * k, c) + c.post;
+      if (c.b.textContent !== txt) c.b.textContent = txt;
+    }
+
+    const ch = Math.min(N - 1, Math.round(cur));
+    if (ch !== lastCh) {
+      lastCh = ch; hudCh.textContent = "Ch. " + ROMAN[ch]; hudName.textContent = NAMES[ch];
+      railBtns.forEach((b, i) => b.setAttribute("aria-current", i === ch ? "true" : "false"));
+    }
+    const total = Math.round(cur * SECONDS_PER_CHAPTER * FPS);
+    hudTc.textContent = `00:${pad(Math.floor(total / FPS / 60))}:${pad(Math.floor(total / FPS) % 60)}:${pad(total % FPS)}`;
+    hudBar.style.width = (clamp(cur / (N - 1)) * 100).toFixed(2) + "%";
+    cursor.style.transform = `translate(${ptr.px}px, ${ptr.py}px)`;
+    requestAnimationFrame(tick);
+  }
+
+  let lastW = 0, lastH = 0, rt;
+  function onResize() {
+    clearTimeout(rt);
+    rt = setTimeout(() => {
+      const w = stage.clientWidth, h = stage.clientHeight;
+      if (w !== lastW || Math.abs(h - lastH) > 120) { lastW = w; lastH = h; paint(); }
+      readScroll();
+    }, 120);
+  }
+
+  const go = (i) => window.scrollTo({ top: sections[i].offsetTop + 2, behavior: reduced ? "auto" : "smooth" });
+
+  // side rail
+  const rail = document.getElementById("rail");
+  const railBtns = NAMES.map((name, i) => {
+    const b = document.createElement("button");
+    b.setAttribute("aria-label", `Go to chapter ${ROMAN[i]}, ${name}`);
+    b.innerHTML = `<span class="lbl">${ROMAN[i]} · ${name}</span><i></i>`;
+    b.addEventListener("click", () => go(i));
+    rail.appendChild(b); return b;
+  });
+
+  // chapter menu
+  const menu = document.getElementById("chapters"), menuBtn = document.getElementById("menuBtn");
+  const list = document.getElementById("chapterList");
+  NAMES.forEach((name, i) => {
+    const li = document.createElement("li"), b = document.createElement("button");
+    b.innerHTML = `<span class="n">${ROMAN[i]}</span><span class="t">${name}</span><span class="tc">00:00:${pad(i * SECONDS_PER_CHAPTER)}:00</span>`;
+    b.addEventListener("click", () => { setMenu(false); go(i); });
+    li.appendChild(b); list.appendChild(li);
+  });
+  function setMenu(open) {
+    menu.hidden = !open; menuBtn.setAttribute("aria-expanded", open);
+    if (open) list.querySelector("button").focus(); else menuBtn.focus();
+  }
+  menuBtn.addEventListener("click", () => setMenu(menu.hidden));
+  document.getElementById("closeBtn").addEventListener("click", () => setMenu(false));
+  addEventListener("keydown", (ev) => {
+    if (ev.key === "Escape" && !menu.hidden) return setMenu(false);
+    if (!menu.hidden || ev.target.closest("input, textarea")) return;
+    if (ev.key === "ArrowRight") { ev.preventDefault(); go(Math.min(N - 1, Math.round(cur) + 1)); }
+    if (ev.key === "ArrowLeft") { ev.preventDefault(); go(Math.max(0, Math.round(cur) - 1)); }
+  });
+
+  document.getElementById("copyBtn").addEventListener("click", (ev) => {
+    const btn = ev.currentTarget, mail = document.getElementById("mail");
+    const done = () => { btn.textContent = "Copied"; setTimeout(() => (btn.textContent = "Copy email"), 1600); };
+    const fallback = () => { const s = getSelection(), r = document.createRange(); r.selectNodeContents(mail); s.removeAllRanges(); s.addRange(r); btn.textContent = "Selected, press Ctrl+C"; };
+    try { navigator.clipboard.writeText(mail.textContent).then(done, fallback); } catch { fallback(); }
+  });
+
+  addEventListener("pointermove", (ev) => {
+    if (ev.pointerType !== "mouse") return;
+    ptr.x = ev.clientX / innerWidth; ptr.y = ev.clientY / innerHeight; ptr.px = ev.clientX; ptr.py = ev.clientY; ptr.active = true;
+  }, { passive: true });
+  document.addEventListener("pointerleave", () => { ptr.active = false; });
+  document.addEventListener("pointerover", (ev) => cursor.classList.toggle("big", !!ev.target.closest("a, button")));
+
+  addEventListener("scroll", readScroll, { passive: true });
+  addEventListener("resize", onResize);
+  paint(); lastW = W; lastH = H; readScroll(); cur = target;
+  // canvas labels use the web fonts, so repaint once they have arrived
+  if (document.fonts) document.fonts.ready.then(() => { paint(); readScroll(); });
+  requestAnimationFrame((now) => { lastNow = now; tick(now); });
+})();
+</script>
